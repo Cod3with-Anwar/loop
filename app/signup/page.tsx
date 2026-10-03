@@ -1,0 +1,7 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+export default function SignupPage() { const router = useRouter(); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  async function submit(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); setBusy(true); setError(""); const form = new FormData(e.currentTarget); const r = await fetch("/api/auth/signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) }); const data = await r.json(); setBusy(false); if (!r.ok) { setError(data.error); return; } router.push("/login?created=1"); }
+  return <main className="flex min-h-screen items-center justify-center bg-slate-950 p-4 text-white"><form onSubmit={submit} className="w-full max-w-md space-y-4 rounded-xl bg-slate-900 p-7"><h1 className="text-2xl font-bold">Create a LOOP workspace</h1>{[["name", "Your name", "text"], ["workspaceName", "Workspace name", "text"], ["email", "Email", "email"], ["password", "Password (12+ characters)", "password"]].map(([name, label, type]) => <label key={name} className="block text-sm">{label}<input name={name} type={type} minLength={name === "password" ? 12 : undefined} required className="mt-1 w-full rounded bg-slate-950 p-3" /></label>)}{error && <p role="alert" className="text-rose-300">{error}</p>}<button disabled={busy} className="w-full rounded bg-blue-600 p-3">{busy ? "Creating…" : "Create workspace"}</button></form></main>;
+}

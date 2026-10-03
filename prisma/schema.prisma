@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum Sentiment {
+  POS
+  NEU
+  NEG
+}
+
+enum FeedbackStatus {
+  NEW
+  REVIEWED
+  ACTIONED
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users    User[]
+  feedback Feedback[]
+  themes   Theme[]
+  reports  Report[]
+}
+
+model User {
+  id           String @id @default(cuid())
+  name         String
+  email        String
+  passwordHash String
+  role         Role   @default(VIEWER)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  reports Report[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([email])
+  @@index([workspaceId])
+}
+
+model Feedback {
+  id            String  @id @default(cuid())
+  content       String  @db.Text
+  channel       String
+  sourceRef     String?
+  customerLabel String?
+
+  sentiment      Sentiment?
+  sentimentScore Float?
+  featureArea    String?
+  rationale      String?
+
+  status    FeedbackStatus @default(NEW)
+  createdAt DateTime       @default(now())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  themes    FeedbackTheme[]
+  embedding Embedding?
+
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([sentiment])
+}
+
+model Theme {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  color       String?
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  feedback FeedbackTheme[]
+
+  @@index([workspaceId])
+  @@unique([workspaceId, name])
+}
+
+model FeedbackTheme {
+  feedbackId String
+  themeId    String
+  confidence Float?
+
+  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  theme    Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@id([feedbackId, themeId])
+}
+
+model Embedding {
+  id         String @id @default(cuid())
+  feedbackId String @unique
+
+  // Stored as JSON for the initial implementation.
+  // Can be changed to pgvector later for optimized semantic search.
+  vector Json
+
+  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  title       String
+  periodStart DateTime
+  periodEnd   DateTime
+  contentJson Json
+  createdAt   DateTime @default(now())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  generatedById String
+  generatedBy   User   @relation(fields: [generatedById], references: [id])
+
+  @@index([workspaceId])
+  @@index([createdAt])
+}

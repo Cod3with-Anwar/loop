@@ -27,16 +27,6 @@ npm run seed
 npm run dev
 ```
 
-Open http://localhost:3000. The seed creates a demo workspace with 120 feedback rows and three accounts:
-
-| Role | Email | Password |
-| --- | --- | --- |
-| Admin | admin@loop.demo | Demo@123 |
-| Analyst | analyst@loop.demo | Demo@123 |
-| Viewer | viewer@loop.demo | Demo@123 |
-
-These are development credentials only. Replace them before deploying a public demo. `npm run seed` refreshes only the `LOOP Demo Workspace`; it refuses to move a matching demo email from another workspace.
-
 ## Environment
 
 | Variable | Required | Description |
